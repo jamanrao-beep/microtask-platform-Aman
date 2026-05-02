@@ -1,0 +1,65 @@
+// prisma/schema.prisma
+// SQLite does not support enums — all enum-like fields use String with @default
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  password    String
+  // role: "ADMIN" | "WORKER"
+  role        String       @default("WORKER")
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+  wallet      Wallet?
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  pending   Float    @default(0)
+  approved  Float    @default(0)
+  withdrawn Float    @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  title        String
+  description  String
+  // type: "SURVEY" | "REDDIT_POST" | "REDDIT_UPVOTE" | "DATA_COLLECTION" | "SOCIAL_MEDIA" | "APP_REVIEW" | "CONTENT_WRITING"
+  type         String       @default("SURVEY")
+  reward       Float
+  requiredQty  Int
+  completedQty Int          @default(0)
+  // status: "ACTIVE" | "PAUSED" | "COMPLETED"
+  status       String       @default("ACTIVE")
+  instructions String
+  // proofType: "SCREENSHOT" | "URL" | "TEXT"
+  proofType    String       @default("SCREENSHOT")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  submissions  Submission[]
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  proof     String
+  // status: "PENDING" | "APPROVED" | "REJECTED"
+  status    String   @default("PENDING")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
